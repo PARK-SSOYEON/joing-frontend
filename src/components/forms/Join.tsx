@@ -1,11 +1,16 @@
 import React, {useState} from "react";
 import styled from "styled-components";
 import NoticeIcon from "../../assets/icons/icon_notice.png";
+import {creatorJoin, productmanagerJoin} from "../../services/authService.ts";
+import MediaTypeSelector from "../elements/MediaTypeSelector.tsx";
+import {MultiCategorySelector} from "../elements/CategorySelector.tsx";
+import categories from "../../data/categories";
+import {Role} from "../../constants/roles.ts";
 
-interface CreatorJoinProps {
+interface JoinProps {
     onNext: () => void;
     onBack: () => void;
-    role: "creator" | "planner" | null;
+    role: Role | null;
 }
 
 const emailDomains = [
@@ -17,30 +22,23 @@ const emailDomains = [
     '직접 입력'
 ];
 
-const categories = [
-    "게임", "과학기술", "교육", "노하우/스타일", "뉴스/정치", "스포츠", "비영리/사회운동", "애완동물/동물",
-    "엔터테인먼트", "여행/이벤트", "영화/애니메이션", "음악", "인물/블로그", "자동차/교통", "코미디", "기타"
-];
-
-const Join: React.FC<CreatorJoinProps> = ({ onNext, onBack, role}) => {
+const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
     const [nickname, setNickname] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState<string | null> (null);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [channelID, setChannelID] = useState('');
     const [channelLink, setChannelLink] = useState('');
     const [emailPrefix, setEmailPrefix] = useState('');
     const [emailDomain, setEmailDomain] = useState(emailDomains[0]);
     const [customDomain, setCustomDomain] = useState('');
     const [fullEmail, setFullEmail] = useState('');
-    const [verificationCode, setVerificationCode] = useState('');
     const [isVerifyEnabled, setIsVerifyEnabled] = useState(false);
-    const [isVerifiedClicked, setIsVerifiedClicked] = useState(false);
-    const [isEmailVerified, setIsEmailVerified] = useState(false);
     const [selectedType, setSelectedType] = useState<string | null>(null);
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
     const isOkayEnabled =
-        role === "creator"
-            ? nickname && isEmailVerified && selectedCategory && channelLink && selectedType
-            : nickname && isEmailVerified && selectedType;
+        role === Role.CREATOR
+            ? nickname && selectedCategory && channelID && channelLink && selectedType && isVerifyEnabled
+            : nickname && selectedCategories.length > 0 && isVerifyEnabled;
 
     const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setNickname(e.target.value);
@@ -79,18 +77,6 @@ const Join: React.FC<CreatorJoinProps> = ({ onNext, onBack, role}) => {
         }
     };
 
-    const handleVerifyClick= () => {
-        if (verificationCode === "000000") {
-            setIsEmailVerified(true);
-        }
-
-        setIsVerifiedClicked(true);
-    }
-
-    const handleVerificationCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setVerificationCode(e.target.value);
-    };
-
     const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedCategory(e.target.value);
     };
@@ -103,25 +89,44 @@ const Join: React.FC<CreatorJoinProps> = ({ onNext, onBack, role}) => {
         setChannelLink(e.target.value);
     };
 
-    const handleTypeClick = (type: string) => {
-        setSelectedType(type);
-    };
-
-    const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-    };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (isOkayEnabled) {
-            console.log({
-                nickname,
-                fullEmail,
-                selectedCategory,
-                channelLink,
-                selectedType,
-            });
-            onNext();
+        if (!isOkayEnabled) return;
+
+        try {
+            if (role === Role.CREATOR) {
+                const result = await creatorJoin({
+                    nickname,
+                    email: fullEmail,
+                    channelId: channelID,
+                    channelUrl: channelLink,
+                    mediaType: selectedType || '',
+                    category: selectedCategory || '',
+                });
+
+                if (result.success) {
+                    onNext();
+                } else {
+                    alert('Failed to sign up as creator. Please try again.');
+                }
+            } else if (role === Role.PRODUCT_MANAGER) {
+                const result = await productmanagerJoin({
+                    nickname,
+                    email: fullEmail,
+                    favoriteCategories: selectedCategories.length > 0 ? selectedCategories : [],
+                });
+
+                if (result.success) {
+                    onNext();
+                } else {
+                    alert('Failed to sign up as productManager. Please try again.');
+                }
+            } else {
+                alert('Invalid role selected. Please select a valid role.');
+            }
+        } catch (_error) {
+            alert('An unexpected error occurred. Please try again.');
         }
     };
 
@@ -130,20 +135,26 @@ const Join: React.FC<CreatorJoinProps> = ({ onNext, onBack, role}) => {
             <Form onSubmit={handleSubmit}>
                 <Title>회원가입</Title>
                 <InputForm>
-                    <Label>Nickname (Channel Name)</Label>
+                    <Label>Nickname</Label>
                     <InputField
                         placeholder="Enter your Nickname"
                         value={nickname}
                         onChange={handleNicknameChange}
                     />
+                    {role === Role.CREATOR &&
+                        <Notice>
+                            <img src={NoticeIcon} alt="Notice Icon"/>
+                            채널 이름과 동일하게 설정하시는걸 추천드려요
+                        </Notice>
+                    }
+
                 </InputForm>
                 <InputForm>
                     <Label>Email</Label>
                     <EmailContainer>
                         <InputField
                             placeholder="Enter your Email"
-                            onChange = {handleEmailPrefixChange}
-                            disabled={isEmailVerified}
+                            onChange={handleEmailPrefixChange}
                         />
                         <EmailSeparator>@</EmailSeparator>
                         {emailDomain === '직접 입력' ? (
@@ -152,13 +163,11 @@ const Join: React.FC<CreatorJoinProps> = ({ onNext, onBack, role}) => {
                                 value={customDomain}
                                 onChange={handleCustomDomainChange}
                                 placeholder="입력하세요."
-                                disabled={isEmailVerified}
                             />
                         ) : (
                             <ComboBox
                                 value={emailDomain}
                                 onChange={handleDomainChange}
-                                disabled={isEmailVerified}
                             >
                                 {emailDomains.map((domain) => (
                                     <option key={domain} value={domain}>
@@ -172,23 +181,8 @@ const Join: React.FC<CreatorJoinProps> = ({ onNext, onBack, role}) => {
                         <img src={NoticeIcon} alt="Notice Icon"/>
                         상대와 연락할 때 사용할 이메일을 입력해주세요
                     </Notice>
-                    <VerifyContainer>
-                        <InputField
-                            placeholder="Enter your verification code"
-                            value={verificationCode}
-                            onChange={handleVerificationCodeChange}
-                            disabled={isEmailVerified}
-                            style={{ display: isVerifiedClicked ? 'block' : 'none' }}
-                        />
-                        <VerifyButton
-                            onClick={handleVerifyClick}
-                            disabled={!isVerifyEnabled || isEmailVerified}
-                        >
-                            {isVerifiedClicked ? '인증하기' : '이메일 인증'}
-                        </VerifyButton>
-                    </VerifyContainer>
                 </InputForm>
-                {role === "creator" && (
+                {role === Role.CREATOR && (
                     <>
                         <InputForm>
                             <Label>Channel Category</Label>
@@ -216,51 +210,24 @@ const Join: React.FC<CreatorJoinProps> = ({ onNext, onBack, role}) => {
                             />
                             <Notice>
                                 <img src={NoticeIcon} alt="Notice Icon"/>
-                                유튜브, 인스타그램, 틱톡 등 프로필 아이디 및 링크를 입력해주세요
+                                유튜브 채널 아이디 및 링크를 입력해주세요
                             </Notice>
                         </InputForm>
                         <InputForm>
                             <Label>Media Type</Label>
-                            <Types>
-                                <Type
-                                    onClick={(e) => {
-                                        handleTypeClick("Short-Form");
-                                        handleButtonClick(e);
-                                    }}
-                                    isSelected={selectedType === "Short-Form"}
-                                >
-                                    Short-Form
-                                </Type>
-                                <Type
-                                    onClick={(e) => {
-                                        handleTypeClick("Long-Form");
-                                        handleButtonClick(e);
-                                    }}
-                                    isSelected={selectedType === "Long-Form"}
-                                >
-                                    Long-Form
-                                </Type>
-                            </Types>
+                            <MediaTypeSelector selectedType={selectedType} setSelectedType={setSelectedType} readOnly={false}/>
                         </InputForm>
                     </>
                 )}
-                {role === "planner" && (
+                {role === Role.PRODUCT_MANAGER && (
                     <>
                         <InputForm>
                             <Label>선호 카테고리</Label>
-                            <Category>
-                                {categories.map((category) => (
-                                        <Type
-                                            onClick={(e) => {
-                                                handleTypeClick(category);
-                                                handleButtonClick(e);
-                                            }}
-                                            isSelected={selectedType === category}
-                                        >
-                                            {category}
-                                        </Type>
-                                    ))}
-                            </Category>
+                            <MultiCategorySelector
+                                selectedCategories={selectedCategories}
+                                setSelectedCategories={setSelectedCategories}
+                                readOnly={false}
+                            />
                         </InputForm>
                     </>
                 )}
@@ -286,10 +253,10 @@ const Form = styled.form`
 `;
 
 const Title = styled.h2`
-    font-size: 20px;
+    font-size: 1.5rem;
     font-weight: bold;
-    margin-bottom: 20px;
     text-align: center;
+    margin: 4rem;
 `;
 
 const InputForm = styled.div`
@@ -299,7 +266,7 @@ const InputForm = styled.div`
 `;
 
 const Label = styled.label`
-    font-size: 12px;
+    font-size: 0.9rem;
     font-weight: 500;
     margin-bottom: 4px;
     margin-top: 0;
@@ -307,11 +274,11 @@ const Label = styled.label`
 `;
 
 const InputField = styled.input`
-    padding: 6px;
+    padding: 0.6rem;
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 14px;
-    margin-top: 3px;
+    margin-top: 0.3rem;
     transition: border-color 0.3s;
     flex: 1;
 
@@ -326,37 +293,13 @@ const EmailContainer = styled.div`
     align-items: center;
 `;
 
-const VerifyContainer = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 5px;
-`;
-
 const EmailSeparator = styled.span`
     padding: 0 8px;
     font-size: 14px;
 `;
 
-const VerifyButton = styled.button`
-    padding: 6px 15px;
-    width: 100px;
-    height: 30px;
-    background-color: ${({ disabled }) => (disabled ? '#cccccc' : '#000000')};
-    border: none;
-    border-radius: 5px;
-    color: white;
-    cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
-    transition: background-color 0.3s;
-    font-size: 12px;
-
-    &:hover {
-        background-color: ${({ disabled }) => (disabled ? '#cccccc' : '#3e3e3e')};
-        border: none;
-    }
-`;
-
 const ComboBox = styled.select`
+    flex: 1;
     padding: 6px;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -384,37 +327,10 @@ const Notice = styled.div`
     }
 `;
 
-const Types = styled.div`
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-`;
-
-const Type = styled.button<{ isSelected: boolean }>`
-    padding: 6px 10px;
-    border: 1px solid ${({ isSelected }) => (isSelected ? '#555' : '#ccc')};
-    border-radius: 20px;
-    background-color: ${({ isSelected }) => (isSelected ? '#b6b6b6' : '#f9f9f9')};
-    cursor: pointer;
-    transition: background-color 0.3s, border-color 0.3s;
-    font-size: 12px;
-
-    &:hover {
-        background-color: #ececec;
-        border-color: #888;
-    }
-
-    &:focus {
-        background-color: #b6b6b6;
-        border-color: #555;
-        outline: none;
-    }
-`;
-
 const Buttons = styled.div`
     display: flex;
     justify-content: center;
-    margin-top: 1rem;
+    margin-top: 4rem;
     gap: 10px;
 `;
 
@@ -438,21 +354,15 @@ const OkayButton = styled.button`
     padding: 6px 15px;
     width: 100px;
     height: 40px;
-    background-color: ${({ disabled }) => (disabled ? '#cccccc' : '#000000')};
+    background-color: ${({disabled}) => (disabled ? '#cccccc' : '#000000')};
     border: none;
     border-radius: 10px;
     color: white;
     transition: background-color 0.3s;
-    cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
+    cursor: ${({disabled}) => (disabled ? 'not-allowed' : 'pointer')};
 
     &:hover {
-        background-color: ${({ disabled }) => (disabled ? '#cccccc' : '#3e3e3e')};
+        background-color: ${({disabled}) => (disabled ? '#cccccc' : '#3e3e3e')};
         border: none;
     }
-`;
-
-const Category = styled.div`
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
 `;

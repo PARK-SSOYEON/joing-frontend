@@ -1,6 +1,6 @@
 import Header from "./Header.tsx";
 import styled from 'styled-components';
-import Auth from "../modal/Auth.tsx";
+import AuthModal from "../modal/AuthModal.tsx";
 import React, {useCallback, useState} from "react";
 
 const Layout = (props: {
@@ -23,7 +23,7 @@ const Layout = (props: {
                 {props.children}
             </Main>
             {isOpenModal && (
-                <Auth handleClose={handleClose}/>
+                <AuthModal handleClose={handleClose}/>
             )}
         </>
     )

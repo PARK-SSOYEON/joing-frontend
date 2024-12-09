@@ -1,18 +1,20 @@
 import React from "react";
 import kakaoLogin from '../../assets/kakao_login_medium_narrow.png';
-import JoingLogo from '../../assets/Logo_joing.png';
+import JoingLogo from '../../assets/Logo_joing2.png';
 import styled from "styled-components";
 
-interface LoginFormProps {
-    onNext: () => void;
-}
+const kakaologin = import.meta.env.VITE_KAKAO_LOGIN_URL;
 
-const LoginForm: React.FC<LoginFormProps> = ({ onNext }) => {
+const LoginForm: React.FC = () => {
+    const handleLogin = () => {
+        window.location.href = kakaologin;
+    };
+
     return (
         <>
             <Logo src={JoingLogo} alt="Project Logo" />
             <LogoTitle>Joing</LogoTitle>
-            <KakaoLoginButton onClick={onNext}>
+            <KakaoLoginButton onClick={handleLogin}>
                 <img src={kakaoLogin} alt="Kakao Login" />
             </KakaoLoginButton>
         </>

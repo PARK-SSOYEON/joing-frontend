@@ -1,36 +1,38 @@
 import React from 'react';
 import styled from 'styled-components';
 import {useUser} from '../../contexts/UserContext.tsx'
+import {ToggleValue} from "../../pages/Onboarding.tsx";
+import {Role} from "../../constants/roles.ts";
 
 interface ToggleProps {
-    value: string;
-    onToggle: (state: string) => void;
+    value: ToggleValue;
+    onToggle: (state: ToggleValue) => void;
 }
 
 const Toggle: React.FC<ToggleProps> = ({value, onToggle}) => {
-    const { role } = useUser();
+    const {role} = useUser();
 
-    const onChangeMode = (type: string) => {
+    const onChangeMode = (type: ToggleValue) => {
         onToggle(type);
     };
 
     return (
         <Switch value={value} role={role}>
             <span/>
-            {(role === 'creator' || role === null) && (
+            {(role === Role.CREATOR || role === null) && (
                 <CreBtn
                     type="button"
                     value={value}
-                    onClick={()=>onChangeMode("creator")}
+                    onClick={() => onChangeMode(Role.CREATOR)}
                 >
                     크리에이터
                 </CreBtn>
             )}
-            {(role === 'planner' || role === null) && (
+            {(role === Role.PRODUCT_MANAGER || role === null) && (
                 <PlanBtn
                     type="button"
                     value={value}
-                    onClick={()=>onChangeMode("planner")}
+                    onClick={() => onChangeMode(Role.PRODUCT_MANAGER)}
                 >
                     기획자
                 </PlanBtn>
@@ -41,18 +43,17 @@ const Toggle: React.FC<ToggleProps> = ({value, onToggle}) => {
 
 export default Toggle;
 
-const Switch = styled.div<{ value: string; role: string | null }>`
+const Switch = styled.div<{ value: ToggleValue; role: string | null }>`
     position: relative;
-    width: ${({ role}) => role === null ? "340px": "174px"};
+    width: ${({role}) => role === null ? "340px" : "174px"};
     height: 44px;
     margin: 50px 0 30px 0;
     background-color: #ffffff;
     border-radius: 25px;
     border: 2px solid;
 
-    ${({ value }) =>
-            value === "creator" ? "border-color: #FF5D5D;" : "border-color: #6cbd4f;"}
-
+    ${({value}) =>
+            value === Role.CREATOR ? "border-color: #FF5D5D;" : "border-color: #6cbd4f;"}
     span {
         position: absolute;
         width: 170px;
@@ -62,12 +63,12 @@ const Switch = styled.div<{ value: string; role: string | null }>`
         transition: transform 0.3s ease, background-color 0.3s ease;
         z-index: 1;
 
-        ${({ value }) =>
-                value === "creator" ? "background-color: #FF5D5D;" : "background-color: #6cbd4f;"}
+        ${({value}) =>
+                value === Role.CREATOR ? "background-color: #FF5D5D;" : "background-color: #6cbd4f;"}
 
-        ${({ value, role}) =>
+        ${({value, role}) =>
                 role === null
-                        ? value === "creator"
+                        ? value === Role.CREATOR
                                 ? "transform: translateX(2px);"
                                 : "transform: translateX(168px);"
                         : "transform: translateX(2px);"
@@ -75,7 +76,7 @@ const Switch = styled.div<{ value: string; role: string | null }>`
     }
 `;
 
-const Button = styled.button<{ value: string }>`
+const Button = styled.button<{ value: ToggleValue }>`
     position: relative;
     background-color: transparent;
     width: 170px;
@@ -84,8 +85,8 @@ const Button = styled.button<{ value: string }>`
     font-size: 14px;
     cursor: pointer;
     z-index: 2;
-    
-    &:focus{
+
+    &:focus {
         outline: none;
     }
 
@@ -95,11 +96,11 @@ const Button = styled.button<{ value: string }>`
 `;
 
 const CreBtn = styled(Button)`
-    ${({ value }) =>
-        value === "creator" ? "transition:color 0.3s ease; color: #ffffff;" : null} 
+    ${({value}) =>
+            value === Role.CREATOR ? "transition:color 0.3s ease; color: #ffffff;" : null}
 `;
 
 const PlanBtn = styled(Button)`
-    ${({ value }) =>
-        value === "planner" ? "transition:color 0.3s ease; color: #ffffff;" : null}
+    ${({value}) =>
+            value === Role.PRODUCT_MANAGER ? "transition:color 0.3s ease; color: #ffffff;" : null}
 `;

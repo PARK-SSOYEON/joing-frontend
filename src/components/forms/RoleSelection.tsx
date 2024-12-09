@@ -5,10 +5,10 @@ import iconPlanner from "../../assets/icons/icon_planner.png";
 
 interface RoleSelectionProps {
     onSelectCreator: () => void;
-    onSelectPlanner: () => void;
+    onSelectProductManager: () => void;
 }
 
-const RoleSelection: React.FC<RoleSelectionProps> = ({ onSelectCreator, onSelectPlanner }) => {
+const RoleSelection: React.FC<RoleSelectionProps> = ({ onSelectCreator, onSelectProductManager }) => {
     return (
         <>
             <Title>회원가입</Title>
@@ -17,7 +17,7 @@ const RoleSelection: React.FC<RoleSelectionProps> = ({ onSelectCreator, onSelect
                     <img src={iconCreator} alt="Creator icon"/>
                     <RoleText>크리에이터</RoleText>
                 </Box>
-                <Box onClick={onSelectPlanner}>
+                <Box onClick={onSelectProductManager}>
                     <img src={iconPlanner} alt="Planner icon"/>
                     <RoleText>기획자</RoleText>
                 </Box>
@@ -31,7 +31,7 @@ export default RoleSelection;
 const Title = styled.h2`
     font-size: 24px;
     font-weight: bold;
-    margin-bottom: 60px;
+    margin: 4rem;
     text-align: center;
 `;
 
@@ -39,19 +39,21 @@ const RoleSelect = styled.div`
     display: flex;
     justify-content: space-around;
     width: 100%;
+    gap: 2rem;
 `;
 
 const Box = styled.div`
     display: flex;
     flex-direction: column;
+    flex: 1;
+    aspect-ratio: 1 / 1.3;
+    height: auto;
     align-items: center;
     justify-content: center;
-    width: 120px;
-    height: 150px;
     padding: 10px;
     background-color: #f9f9f9;
     border: 2px solid #e0e0e0;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -65,8 +67,8 @@ const Box = styled.div`
     }
 
     img {
-        width: 70px;
-        height: 70px;
+        width: 80%;
+        height: auto;
         margin-bottom: 10px;
     }
 `;
@@ -74,5 +76,6 @@ const Box = styled.div`
 const RoleText = styled.span`
     font-size: 18px;
     font-weight: 500;
+    margin-top: 1rem;
     color: #333;
 `;

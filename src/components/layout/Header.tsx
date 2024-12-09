@@ -1,19 +1,26 @@
 import React from 'react';
 import styled from 'styled-components';
 import {useNavigate} from "react-router-dom";
-import LogoImg from "../../assets/Logo_joing.png";
+import LogoImg from "../../assets/Logo_joing2.png";
 import '../../styles/fonts.css';
-import {useUser} from '../../contexts/UserContext.tsx'
 import iconMail from "../../assets/icons/icon_mail.png";
 import iconProfile from "../../assets/icons/icon_profile.png";
+import iconLogout from "../../assets/icons/icon_logout.png";
+import {logout} from "../../services/authService.ts";
 
 interface HeaderProps {
     onLoginClick: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
-    const { role } = useUser();
     const navigate = useNavigate();
+
+    const isLoggedIn = Boolean(localStorage.getItem("accessToken"));
+
+    const handleLogout = async () => {
+        await logout();
+        navigate("/");
+    };
 
     return (
         <HeaderContainer>
@@ -22,9 +29,8 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
                     <img src={LogoImg} alt="arrow icon"/>
                     Joing
                 </Logo>
-                {role === null
-                    ? <Button onClick={onLoginClick}>Login</Button>
-                    : <ButtonGroup>
+                {isLoggedIn ? (
+                    <ButtonGroup>
                         <Button
                             onClick={() => navigate("/message")}
                         >
@@ -35,9 +41,13 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
                         >
                             <img src={iconProfile} alt="arrow icon"/>
                         </Button>
+                        <Button onClick={handleLogout}>
+                            <img src={iconLogout} alt="logout icon"/>
+                        </Button>
                     </ButtonGroup>
-                }
-
+                ):(
+                   <Button onClick={onLoginClick}>Login</Button>
+                )}
             </Content>
         </HeaderContainer>
     );

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import Layout from "../components/layout/Layout.tsx";
 import {useUser} from '../contexts/UserContext.tsx'
+import {Role} from "../constants/roles.ts";
 
 const DraftDetailView = () => {
     const { index } = useParams<{ index: string }>();
@@ -65,9 +66,8 @@ const DraftDetailView = () => {
                     </MiscView>
                 </RightBox>
             </Container>
-            {role === "planner" && (
+            {role === Role.PRODUCT_MANAGER && (
                 <Buttons>
-                    <EditButton>수정하기</EditButton>
                     <DeleteButton>삭제하기</DeleteButton>
                 </Buttons>
            )}
@@ -207,28 +207,6 @@ const Buttons = styled.div`
     margin: 50px 0;
     padding-bottom: 30px;
     gap: 10px;
-`;
-
-const EditButton = styled.button`
-    font-family: 'SUITE-Bold', serif;
-    padding: 6px 15px;
-    width: 200px;
-    height: 40px;
-    background-color: #ffffff;
-    border: 1px solid black;
-    border-radius: 10px;
-    color: black;
-    transition: background-color 0.3s;
-    cursor: pointer;
-
-    &:hover {
-        background-color: #e0e0e0;
-        border: 1px solid #000000;
-    }
-
-    &:focus {
-        outline: none;
-    }
 `;
 
 const DeleteButton = styled.button`

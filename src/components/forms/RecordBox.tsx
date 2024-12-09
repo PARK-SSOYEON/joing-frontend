@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import {useUser} from "../../contexts/UserContext.tsx";
+import {Role} from "../../constants/roles.ts";
 
 interface RecordBoxProps {
     title: string;
@@ -13,7 +14,7 @@ const RecordBox: React.FC<RecordBoxProps> = ({title, summary, onViewDetails}) =>
 
     return (
         <BoxContainer>
-            {role === "planner" && <IconPlaceholder/>}
+            {role === Role.PRODUCT_MANAGER && <IconPlaceholder/>}
             <TextContainer>
                 <Title>{title}</Title>
                 <Summary>{summary}</Summary>

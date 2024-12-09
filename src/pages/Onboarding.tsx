@@ -15,21 +15,29 @@ import iconStoryboard from '../assets/icons/icon_storyboard.png';
 import iconCleanbot from '../assets/icons/icon_bot.png';
 
 import '../styles/fonts.css';
+import {extractAndSaveToken} from "../services/authService.ts";
+import {Role} from "../constants/roles.ts";
+
+export type ToggleValue = Role;
 
 const Onboarding: React.FC = () => {
     const navigate = useNavigate();
-    const {role} = useUser();
-    const [toggleValue, setIsToggled] = useState<string>("");
+    const {role, setRole} = useUser();
+    const [toggleValue, setIsToggled] = useState<ToggleValue>(Role.CREATOR);
 
     useEffect(() => {
-        if (role === "creator" || role === null) {
-            setIsToggled("creator");
-        } else if (role === "planner") {
-            setIsToggled("planner");
+        extractAndSaveToken();
+    }, [setRole]);
+
+    useEffect(() => {
+        if (role === Role.CREATOR || role === null) {
+            setIsToggled(Role.CREATOR);
+        } else if (role === Role.PRODUCT_MANAGER) {
+            setIsToggled(Role.PRODUCT_MANAGER);
         }
     }, [role]);
 
-    const handleToggleChange = (newValue: string) => {
+    const handleToggleChange = (newValue: ToggleValue) => {
         setIsToggled(newValue);
     };
 
@@ -43,7 +51,7 @@ const Onboarding: React.FC = () => {
                             <LeftBox>
                                 <Toggle value={toggleValue} onToggle={handleToggleChange} />
                                 <Slogan>
-                                    {toggleValue==="creator" ? "나는 크리에이터다!!" : "나는 기획자다!!"}
+                                    {toggleValue === Role.CREATOR ? "나는 크리에이터다!!" : "나는 기획자다!!"}
                                 </Slogan>
                                 <Detail>
                                     Lorem ipsum dolor sit amet, consectetur adipiscing elit,<br/>
@@ -54,15 +62,15 @@ const Onboarding: React.FC = () => {
                                 <MainButton
                                     value={toggleValue}
                                     onClick={() => {
-                                        if (toggleValue === "planner") {
+                                        if (toggleValue === Role.PRODUCT_MANAGER) {
                                             navigate("/draftplan");
                                         }
-                                        else if (toggleValue === "creator") {
+                                        else if (toggleValue === Role.CREATOR) {
                                             navigate("/matching/draft");
                                         }
                                     }}
                                 >
-                                    {toggleValue === "creator" ? (
+                                    {toggleValue === Role.CREATOR ? (
                                         <>
                                             <span>기획안 추천받기</span>
                                             <img src={iconArrow} alt="arrow icon" />
@@ -106,7 +114,7 @@ const Onboarding: React.FC = () => {
                     </CenteredSection>
                     <CenteredSection>
                         <Container3>
-                            {toggleValue === "creator" ? (
+                            {toggleValue === Role.CREATOR ? (
                                 <>
                                     <Slogan>
                                         크리에이터인 당신을 위한 JOING만의 서비스 프로세스!
@@ -238,10 +246,10 @@ const MainButton = styled.button`
 
     &:hover {
         border: none;
-        background-color: ${({ value }) => (value === "creator" ? "#FF3D3D" : "#307718")};;
+        background-color: ${({ value }) => (value === Role.CREATOR ? "#FF3D3D" : "#307718")};
     }
 
-    background-color: ${({ value }) => (value === "creator" ? "#FF5D5D" : "#6cbd4f")};
+    background-color: ${({ value }) => (value === Role.CREATOR ? "#FF5D5D" : "#6cbd4f")};
 `;
 
 const ImgBox = styled.div`
@@ -323,9 +331,9 @@ const Num = styled.h2`
     margin-bottom: 0;
 `;
 
-const Title = styled.h2<{ value: string }>`
+const Title = styled.h2<{ value: ToggleValue }>`
     font-family: 'GongGothicMedium', serif;
     font-size: 18px;
     font-weight: bolder;
-    color: ${({ value }) => (value === "creator" ? "#FF5D5D" : "#6cbd4f")};
+    color: ${({ value }) => (value === Role.CREATOR ? "#FF5D5D" : "#6cbd4f")};
 `;

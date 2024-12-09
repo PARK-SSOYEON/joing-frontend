@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from "styled-components";
 import SearchIcon from "../../assets/icons/icon_search.png";
-import RecordBox from "../box/RecordBox.tsx";
+import RecordBox from "../forms/RecordBox.tsx";
 
 const TabRecordDetail: React.FC = () => {
 
