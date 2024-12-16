@@ -10,7 +10,7 @@ const TabRecordDetail: React.FC = () => {
     };
 
     return (
-        <>
+        <RecordDetail>
             <SearchBar>
                 <img src={SearchIcon} alt="search icon"/>
                 <Search placeholder="검색어를 입력하세요..." />
@@ -25,11 +25,20 @@ const TabRecordDetail: React.FC = () => {
                 summary="Summary 2"
                 onViewDetails={handleViewDetails}
             />
-        </>
+        </RecordDetail>
     );
 };
 
 export default TabRecordDetail;
+
+const RecordDetail = styled.div`
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-items: center;
+    gap: 1rem;
+`;
 
 const SearchBar = styled.div`
     width: 100%;
@@ -50,7 +59,7 @@ const Search = styled.input`
     width: 100%;
     padding: 0.8rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 12px;
     font-size: 16px;
     background-color: #f6f6f6;
     

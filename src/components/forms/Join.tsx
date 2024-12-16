@@ -1,26 +1,23 @@
 import React, {useState} from "react";
-import styled from "styled-components";
+import styled, {css, keyframes} from "styled-components";
 import NoticeIcon from "../../assets/icons/icon_notice.png";
 import {creatorJoin, productmanagerJoin} from "../../services/authService.ts";
 import MediaTypeSelector from "../elements/MediaTypeSelector.tsx";
 import {MultiCategorySelector} from "../elements/CategorySelector.tsx";
 import categories from "../../data/categories";
 import {Role} from "../../constants/roles.ts";
+import emailDomains from "../../data/emailDomains.ts";
+import ChannelIdGuideModal from "../modal/ChannelIdGuideModal.tsx";
+import {profileEvaluation} from "../../services/userService.ts";
+import ResultModal from "../modal/Modal.tsx";
+import LoadingGif from "../../assets/Loading.gif";
+
 
 interface JoinProps {
     onNext: () => void;
     onBack: () => void;
     role: Role | null;
 }
-
-const emailDomains = [
-    'naver.com',
-    'hanmail.net',
-    'daum.net',
-    'gmail.com',
-    'nate.com',
-    '직접 입력'
-];
 
 const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
     const [nickname, setNickname] = useState('');
@@ -34,10 +31,22 @@ const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
     const [isVerifyEnabled, setIsVerifyEnabled] = useState(false);
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
+    const [isEditable, setIsEditable] = useState(true);
+    const [isEvalueResultModal, setIsEvalueResultModal] = useState(false);
+    const [evalueModalContent, setEvalueModalContent] = useState<React.ReactNode>(null);
+    const [isEvaluationLoading, setIsEvaluationLoading] = useState(false);
+
+    const handleFocus = () => setIsFocused(true);
+    const handleBlur = () => setIsFocused(false);
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => setIsModalOpen(false);
+    const closeResultModal = () => setIsEvalueResultModal(false);
 
     const isOkayEnabled =
         role === Role.CREATOR
-            ? nickname && selectedCategory && channelID && channelLink && selectedType && isVerifyEnabled
+            ? nickname && selectedCategory && channelID && channelLink && selectedType && isVerifyEnabled && !isEditable
             : nickname && selectedCategories.length > 0 && isVerifyEnabled;
 
     const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,7 +78,7 @@ const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
         const combinedEmail = `${prefix}@${domain}`;
         setFullEmail(combinedEmail);
 
-        const pattern = /^[A-Za-z0-9_.-]+@[A-Za-z0-9-]+\.[A-Za-z]{2,}$/;
+        const pattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         if (pattern.test(combinedEmail)) {
             setIsVerifyEnabled(true);
         } else {
@@ -128,6 +137,36 @@ const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
         } catch (_error) {
             alert('An unexpected error occurred. Please try again.');
         }
+    };
+
+    const handleEvaluation = async () => {
+        if (!channelID) return;
+        setIsEvalueResultModal(true);
+        setIsEvaluationLoading(true);
+
+        setEvalueModalContent(
+            <Loading>
+                <img src={LoadingGif} alt="Loading..."/>
+            </Loading>
+        );
+
+        try {
+            const response = await profileEvaluation(channelID);
+
+            if (response.appearance) {
+                setEvalueModalContent('채널 평가에 성공했습니다. 수정이 불가능합니다.');
+                setIsEditable(false);
+            } else {
+                setEvalueModalContent(
+                    `채널 평가에 통과하지 못했습니다. 이유는 다음과 같습니다: ${response.reason || '다시 시도해주세요.'}`
+                );
+            }
+        } catch (_error) {
+            setEvalueModalContent(
+                '에러가 발생했습니다. 다시 시도해주세요.'
+            );
+        }
+        setIsEvaluationLoading(false);
     };
 
     return (
@@ -198,11 +237,29 @@ const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
                         </InputForm>
                         <InputForm>
                             <Label>Chennel ID / Link</Label>
-                            <InputField
-                                placeholder="Enter your Channel ID"
-                                value={channelID}
-                                onChange={handleChannelIDChange}
-                            />
+                            <EvaluationForm>
+                                <InputField
+                                    placeholder="Enter your Channel ID"
+                                    value={channelID}
+                                    onChange={handleChannelIDChange}
+                                    onFocus={handleFocus}
+                                    onBlur={handleBlur}
+                                />
+                                <TipIcon
+                                    src={NoticeIcon}
+                                    alt="Notice Icon"
+                                    isFocused={isFocused}
+                                    onClick={openModal}
+                                />
+                                <ChannelIdGuideModal isOpen={isModalOpen} onClose={closeModal}/>
+                                <EvaluationButton
+                                    type="button"
+                                    disabled={!channelID || !isEditable}
+                                    onClick={handleEvaluation}
+                                >
+                                    평가
+                                </EvaluationButton>
+                            </EvaluationForm>
                             <InputField
                                 placeholder="Enter your Channel URL"
                                 value={channelLink}
@@ -215,8 +272,19 @@ const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
                         </InputForm>
                         <InputForm>
                             <Label>Media Type</Label>
-                            <MediaTypeSelector selectedType={selectedType} setSelectedType={setSelectedType} readOnly={false}/>
+                            <MediaTypeSelector selectedType={selectedType} setSelectedType={setSelectedType}
+                                               readOnly={false}/>
                         </InputForm>
+                        <ResultModal isOpen={isEvalueResultModal} onClose={closeResultModal}>
+                            <div>
+                                {evalueModalContent}
+                            </div>
+                            {!isEvaluationLoading && (
+                                <ButtonContainer>
+                                    <ModalOkayButton onClick={closeResultModal}>확인</ModalOkayButton>
+                                </ButtonContainer>
+                            )}
+                        </ResultModal>
                     </>
                 )}
                 {role === Role.PRODUCT_MANAGER && (
@@ -256,7 +324,7 @@ const Title = styled.h2`
     font-size: 1.5rem;
     font-weight: bold;
     text-align: center;
-    margin: 4rem;
+    margin: 2.5rem;
 `;
 
 const InputForm = styled.div`
@@ -327,6 +395,33 @@ const Notice = styled.div`
     }
 `;
 
+const bounce = keyframes`
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+`;
+
+const TipIcon = styled.img<{ isFocused: boolean }>`
+    width: 1.5rem;
+    height: auto;
+    ${({isFocused}) =>
+            isFocused &&
+            css`
+                animation: ${bounce} 0.6s infinite;
+            `}
+    transition: animation 0.3s;
+`;
+
+const EvaluationForm = styled.div`
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+`;
+
 const Buttons = styled.div`
     display: flex;
     justify-content: center;
@@ -364,5 +459,54 @@ const OkayButton = styled.button`
     &:hover {
         background-color: ${({disabled}) => (disabled ? '#cccccc' : '#3e3e3e')};
         border: none;
+    }
+`;
+
+const EvaluationButton = styled.button`
+    padding: 6px 12px;
+    background-color: ${({disabled}) => (disabled ? '#cccccc' : '#000000')};
+    border: none;
+    border-radius: 10px;
+    color: white;
+    transition: background-color 0.3s;
+    cursor: ${({disabled}) => (disabled ? 'not-allowed' : 'pointer')};
+
+    &:hover {
+        background-color: ${({disabled}) => (disabled ? '#cccccc' : '#3e3e3e')};
+        border: none;
+    }
+`;
+
+const ButtonContainer = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    gap: 10px;
+`;
+
+const ModalOkayButton = styled.button`
+    padding: 6px 12px;
+    background-color: #000000;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    transition: background-color 0.3s;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #3e3e3e;
+        border: none;
+    }
+`;
+
+const Loading = styled.div`
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    height: 100%;
+
+    img {
+        width: 3rem;
+        height: auto;
     }
 `;

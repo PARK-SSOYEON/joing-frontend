@@ -21,11 +21,11 @@ const AuthModal: React.FC<AuthProps> = ({handleClose}) => {
 export default AuthModal;
 
 const ModalOverlay = styled.div`
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
+    width: 100vw;
+    height: 100vh;
     background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;

@@ -20,23 +20,23 @@ const JoinCompletion: React.FC = () => {
 export default JoinCompletion;
 
 const Logo = styled.img`
-    width: 180px;
+    width: 20rem;
     height: auto;
-    margin-bottom: 20px;
+    margin-top: 3rem;
 `;
 
 const LogoTitle = styled.h1`
     font-family: 'SaenggeoJincheon', serif;
     letter-spacing: -0.03em;
-    font-size: 40px;
-    margin: 0 0 40px 0;
+    font-size: 2.5rem;
+    margin: 0;
 `;
 
 const Title = styled.h2`
-    font-size: 20px;
+    font-size: 1.25rem;
     font-weight: bold;
     text-align: center;
-    margin: 5rem;
+    margin: 3rem;
 `;
 
 const OkayButton = styled.button`

@@ -7,15 +7,17 @@ import iconMail from "../../assets/icons/icon_mail.png";
 import iconProfile from "../../assets/icons/icon_profile.png";
 import iconLogout from "../../assets/icons/icon_logout.png";
 import {logout} from "../../services/authService.ts";
+import {useAuth} from "../../contexts/AuthContext.tsx";
+import {useUser} from "../../contexts/UserContext.tsx";
 
 interface HeaderProps {
     onLoginClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
+const Header: React.FC<HeaderProps> = ({onLoginClick}) => {
     const navigate = useNavigate();
-
-    const isLoggedIn = Boolean(localStorage.getItem("accessToken"));
+    const {accessToken} = useAuth();
+    const {role} = useUser();
 
     const handleLogout = async () => {
         await logout();
@@ -29,24 +31,24 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
                     <img src={LogoImg} alt="arrow icon"/>
                     Joing
                 </Logo>
-                {isLoggedIn ? (
+                {accessToken ? (
                     <ButtonGroup>
-                        <Button
-                            onClick={() => navigate("/message")}
-                        >
-                            <img src={iconMail} alt="arrow icon"/>
-                        </Button>
-                        <Button
-                            onClick={() => navigate("/mypage")}
-                        >
-                            <img src={iconProfile} alt="arrow icon"/>
-                        </Button>
+                        {role && (
+                            <>
+                                <Button onClick={() => navigate("/message")}>
+                                    <img src={iconMail} alt="message icon"/>
+                                </Button>
+                                <Button onClick={() => navigate("/mypage")}>
+                                    <img src={iconProfile} alt="profile icon"/>
+                                </Button>
+                            </>
+                        )}
                         <Button onClick={handleLogout}>
                             <img src={iconLogout} alt="logout icon"/>
                         </Button>
                     </ButtonGroup>
-                ):(
-                   <Button onClick={onLoginClick}>Login</Button>
+                ) : (
+                    <Button onClick={onLoginClick}>Login</Button>
                 )}
             </Content>
         </HeaderContainer>
@@ -89,7 +91,7 @@ const Logo = styled.div`
     gap: 8px;
     cursor: pointer;
 
-    img{
+    img {
         width: 44px;
         height: auto;
     }
@@ -103,10 +105,10 @@ const Button = styled.button`
     background-color: white;
 
     &:hover {
-        transform: scale(1.05);    
+        transform: scale(1.05);
     }
 
-    &:focus{
+    &:focus {
         outline: none;
     }
 

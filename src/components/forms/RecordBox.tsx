@@ -29,9 +29,10 @@ export default RecordBox;
 const BoxContainer = styled.div`
     display: flex;
     align-items: center;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.25);
 `;
 
 const IconPlaceholder = styled.div`
@@ -44,6 +45,7 @@ const IconPlaceholder = styled.div`
 
 const TextContainer = styled.div`
     flex-grow: 1;
+    padding: 1rem;
 `;
 
 const Title = styled.h4`
@@ -60,15 +62,18 @@ const Summary = styled.p`
 
 const DetailsButton = styled.button`
     padding: 0.5rem 1rem;
+    margin: 1rem;
     font-size: 14px;
     border: none;
     border-radius: 12px;
-    background-color: #e0e0e0;
+    background-color: #f3f3f3;
     cursor: pointer;
+    transition: transform 0.3s ease, background-color 0.3s ease;
 
     &:hover {
         background-color: #c8c8c8;
         border: none;
+        transform: scale(1.05);
     }
 
     &:focus {

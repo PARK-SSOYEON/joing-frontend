@@ -1,12 +1,9 @@
 import apiClient from "./apiClient.ts";
+import {ProfileInfo} from "../pages/Mypage.tsx";
 
 export const profileEvaluation = async (channelId: string) => {
     try {
-        const response = await apiClient.get('/api/v1/users/evaluation', {
-            params: {
-                channelId,
-            },
-        });
+        const response = await apiClient.get(`/api/v1/users/evaluation/${channelId}`);
 
         if (response.status === 200) {
             return response.data;
@@ -43,39 +40,28 @@ export const getProductManagerInfo = async () => {
     }
 };
 
-export const patchCreatorInfo = async (data: {
-    nickname: string;
-    email: string;
-    channelId: string;
-    channelUrl: string;
-    mediaType: string;
-    category: string;
-}) => {
+export const patchCreatorInfo = async (data: Partial<ProfileInfo>) => {
     try {
         const response = await apiClient.patch('/api/v1/users/creator', data);
 
         if (response.status === 200) {
-            return {success: true};
+            return {success: true, data: response.data};
         }
         throw new Error(`Unexpected status code: ${response.status}`);
-    } catch (error) {
-        return {success: false, error};
+    } catch (_error) {
+        return {success: false};
     }
 };
 
-export const patchProductManagerInfo = async (data: {
-    nickname: string;
-    email: string;
-    favoriteCategories: string[];
-}) => {
+export const patchProductManagerInfo = async (data: Partial<ProfileInfo>) => {
     try {
         const response = await apiClient.patch('/api/v1/users/productmanager', data);
 
         if (response.status === 200) {
-            return {success: true};
+            return {success: true, data: response.data};
         }
         throw new Error(`Unexpected status code: ${response.status}`);
-    } catch (error) {
-        return {success: false, error};
+    } catch (_error) {
+        return {success: false};
     }
 };

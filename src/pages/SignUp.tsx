@@ -5,6 +5,7 @@ import Join from "../components/forms/Join.tsx";
 import JoinCompletion from "../components/forms/JoinCompletion.tsx";
 import styled from "styled-components";
 import {extractAndSaveToken} from "../services/authService.ts";
+import {useAuth} from '../contexts/AuthContext.tsx'
 import {Role} from "../constants/roles.ts";
 
 type JoinView = "roleSelection" | "Join" | "joinCompletion";
@@ -12,10 +13,17 @@ type JoinView = "roleSelection" | "Join" | "joinCompletion";
 const SignUp = () => {
     const [currentView, setCurrentView] = useState<JoinView>("roleSelection");
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+    const {setAccessToken} = useAuth();
 
     useEffect(() => {
-        extractAndSaveToken();
-    }, []);
+        const initializeAuth = async () => {
+            await extractAndSaveToken();
+            const token = localStorage.getItem("accessToken");
+            setAccessToken(token);
+        };
+
+        initializeAuth();
+    }, [setAccessToken]);
 
     const renderContent = () => {
         switch (currentView) {
