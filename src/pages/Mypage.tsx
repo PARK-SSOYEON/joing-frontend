@@ -181,8 +181,8 @@ const Mypage = () => {
         }
     };
 
-    const updateChannel = async (newChannelId: string, newChannelUrl: string) => {
-        if (newChannelId === profileInfo.channelId && newChannelUrl === profileInfo.channelUrl) {
+    const updateChannel = async (newChannelId: string, newChannelUrl: string, newProfileImage: string) => {
+        if (newChannelId === profileInfo.channelId && newChannelUrl === profileInfo.channelUrl && newProfileImage === profileInfo.profileImage) {
             alert("수정된 내용이 없습니다.");
             setIsModalOpen(false);
             return;
@@ -190,7 +190,8 @@ const Mypage = () => {
 
         const dataToPatch: Partial<ProfileInfo> = {
             channelId: newChannelId,
-            channelUrl: newChannelUrl
+            channelUrl: newChannelUrl,
+            profileImage: newProfileImage
         };
 
         try {

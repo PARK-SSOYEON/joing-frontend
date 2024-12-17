@@ -5,6 +5,7 @@ export const creatorJoin = async (data: {
     email: string;
     channelId: string;
     channelUrl: string;
+    profileImage: string;
     mediaType: string;
     category: string;
 }) => {

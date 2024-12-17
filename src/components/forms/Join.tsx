@@ -31,6 +31,7 @@ const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
     const [isVerifyEnabled, setIsVerifyEnabled] = useState(false);
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [profileImage, setProfileImage] = useState<string>('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const [isEditable, setIsEditable] = useState(true);
@@ -46,7 +47,7 @@ const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
 
     const isOkayEnabled =
         role === Role.CREATOR
-            ? nickname && selectedCategory && channelID && channelLink && selectedType && isVerifyEnabled && !isEditable
+            ? nickname && selectedCategory && channelID && channelLink && selectedType && isVerifyEnabled && !isEditable && profileImage
             : nickname && selectedCategories.length > 0 && isVerifyEnabled;
 
     const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,6 +111,7 @@ const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
                     email: fullEmail,
                     channelId: channelID,
                     channelUrl: channelLink,
+                    profileImage: profileImage,
                     mediaType: selectedType || '',
                     category: selectedCategory || '',
                 });
@@ -153,8 +155,9 @@ const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
         try {
             const response = await profileEvaluation(channelID);
 
-            if (response.evaluation_status) {
+            if (response.evaluationStatus) {
                 setEvalueModalContent('채널 평가에 성공했습니다. 수정이 불가능합니다.');
+                setProfileImage(response.channelImage);
                 setIsEditable(false);
             } else {
                 setEvalueModalContent(
