@@ -12,6 +12,7 @@ import ArrowDown from '../assets/icons/icon_arrowdown.png';
 import WarningIcon from '../assets/icons/icon_warning.png';
 import Loading from '../assets/Loading.gif';
 import NoticeIcon from "../assets/icons/icon_notice.png";
+import {Evaluation, PatchDraftPlan, ReSummary, SaveDraftPlan} from "../services/draftService.ts";
 import MediaTypeSelector from "../components/elements/MediaTypeSelector.tsx";
 
 const DraftPlan: React.FC = () => {
@@ -20,38 +21,29 @@ const DraftPlan: React.FC = () => {
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [miscFields, setMiscFields] = useState<{ name: string; value: string }[]>([{name: '', value: ''}]);
+    const [id, setId] = useState('');
     const [readOnly, setReadOnly] = useState(false);
     const [isSummaryClicked, setIsSummaryClicked] = useState(false);
     const [isSummarizing, setIsSummaraizing] = useState(false);
-    //const [isFeedback, setIsFeedback] = useState(false);
-    const isFeedback = false; //delete
+    const [isFeedback, setIsFeedback] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     const isOkayEnabled = title && content && selectedType && selectedCategory
     const quillRef = useRef<ReactQuill | null>(null);
     const navigate = useNavigate();
 
+    const [summaryData, setSummaryData] = useState({
+        title: '',
+        content: '',
+        keywords: [] as string[],
+    });
+
+    const [feedbackData, setFeedbackData] = useState('');
+
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
     const handleExit = () => navigate('/');
-
-    const saveDraftPlan = (title: string, content: string, selectedType: string, selectedCategory: string, miscFields: {
-        name: string;
-        value: string
-    }[]) => {
-        const draftPlans = JSON.parse(localStorage.getItem("draftPlans") || "[]");
-
-        const newDraft = {
-            title,
-            content,
-            selectedType,
-            selectedCategory,
-            miscFields,
-        };
-
-        draftPlans.push(newDraft);
-        localStorage.setItem("draftPlans", JSON.stringify(draftPlans));
-    };
 
     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setTitle(e.target.value);
@@ -77,21 +69,96 @@ const DraftPlan: React.FC = () => {
 
     const handleReWriteClick = () => {
         setReadOnly(false);
+        setIsEditMode(true);
+
         window.scrollTo({top: 0, behavior: 'smooth'});
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (isOkayEnabled) {
             setIsSummaraizing(true);
-            setTimeout(() => {
+
+            try {
+                let itemId = null;
+                let isSuccessful = false;
+
+                if (!isEditMode) {
+                    const response = await SaveDraftPlan(
+                        title,
+                        content,
+                        selectedType,
+                        selectedCategory,
+                        miscFields
+                    );
+                    if (response.status === 200) {
+                        itemId = response.data.id;
+                        setId(itemId);
+                        isSuccessful = true;
+                    }
+                } else {
+                    const response = await PatchDraftPlan(
+                        id,
+                        title,
+                        content,
+                        selectedType,
+                        selectedCategory,
+                        miscFields
+                    );
+                    if (response.status === 200) {
+                        itemId = id;
+                        isSuccessful = true;
+                    }
+                }
+
+                console.log(itemId);
+
+                if (isSuccessful && itemId) {
+                    const evaluationResponse = await Evaluation(itemId);
+
+                    if (evaluationResponse.data.type == "FEEDBACK") {
+                        setIsFeedback(true);
+                        const comment = evaluationResponse.data.data.comment;
+                        setFeedbackData(comment);
+                    } else {
+                        setIsFeedback(false);
+                        const {title, content, keywords} = evaluationResponse.data.data;
+
+                        setSummaryData({
+                            title,
+                            content,
+                            keywords,
+                        });
+                    }
+
+                    setReadOnly(true);
+                    setIsSummaryClicked(true);
+                }
+            } catch (error) {
+                console.error("Failed to handle draft plan:", error);
+            } finally {
                 setIsSummaraizing(false);
-                setIsSummaryClicked(true);
-            }, 2000);
-            saveDraftPlan(title, content, selectedType, selectedCategory, miscFields)
+            }
         }
-        setReadOnly(true);
     };
+
+    const handleReSummary = async (draftId: string) => {
+        setIsSummaraizing(true);
+
+        try {
+            const response = await ReSummary(draftId);
+            const {title, content, keywords} = response.data;
+
+            setSummaryData({
+                title,
+                content,
+                keywords,
+            });
+        } catch (error) {
+            console.error("Failed to fetch resummary:", error);
+        }
+        setIsSummaraizing(false);
+    }
 
     useEffect(() => {
         if (isSummaryClicked) {
@@ -147,7 +214,8 @@ const DraftPlan: React.FC = () => {
                         </CategoryForm>
                         <TypeForm>
                             <Label>Media Type</Label>
-                            <MediaTypeSelector selectedType={selectedType} setSelectedType={setSelectedType} readOnly={readOnly}/>
+                            <MediaTypeSelector selectedType={selectedType} setSelectedType={setSelectedType}
+                                               readOnly={readOnly}/>
                         </TypeForm>
                         <MiscForm>
                             <Label>기타사항</Label>
@@ -227,24 +295,27 @@ const DraftPlan: React.FC = () => {
                     <SummaryPage>
                         <img src={ArrowDown} alt="arrow down"/>
                         <Summary>
-                            <SumTitle>{isFeedback ? 'Feedback' : title}</SumTitle>
-                            <SumSubTitle>{isFeedback ? 'Feedback Content' : 'Summary'}</SumSubTitle>
-                            <SumContent>{isFeedback ? 'This is a placeholder for feedback content.' : content}</SumContent>
+                            <SumTitle>{isFeedback ? 'Feedback' : summaryData.title}</SumTitle>
+                            <SumSubTitle>{isFeedback ? '' : 'Summary'}</SumSubTitle>
+                            <SumContent>{isFeedback ? feedbackData : summaryData.content}</SumContent>
                             {!isFeedback && (
-                                <>
-                                    <SumSubTitle>Keywords</SumSubTitle>
-                                    <SumKeywords>
-                                        <Keyword>{selectedType}</Keyword>
-                                        <Keyword>{selectedCategory}</Keyword>
-                                    </SumKeywords>
-                                </>
+                                summaryData.keywords.length > 0 && (
+                                    <>
+                                        <SumSubTitle>Keywords</SumSubTitle>
+                                        <SumKeywords>
+                                            {summaryData.keywords.map((keyword, index) => (
+                                                <Keyword key={index}>{keyword}</Keyword>
+                                            ))}
+                                        </SumKeywords>
+                                    </>
+                                )
                             )}
                         </Summary>
                         {!isFeedback ? (
                             <Buttons>
                                 <ReSumButton
                                     type="button"
-                                    //onClick={handleSubmit}
+                                    onClick={() => handleReSummary(id)}
                                 >
                                     요약 재생성
                                 </ReSumButton>

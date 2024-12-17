@@ -153,7 +153,7 @@ const Join: React.FC<JoinProps> = ({onNext, onBack, role}) => {
         try {
             const response = await profileEvaluation(channelID);
 
-            if (response.appearance) {
+            if (response.evaluation_status) {
                 setEvalueModalContent('채널 평가에 성공했습니다. 수정이 불가능합니다.');
                 setIsEditable(false);
             } else {

@@ -1,30 +1,64 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from "styled-components";
 import SearchIcon from "../../assets/icons/icon_search.png";
+import {ViewDraftList} from "../../services/draftService.ts";
+import {useNavigate} from "react-router-dom";
 import RecordBox from "../forms/RecordBox.tsx";
 
 const TabRecordDetail: React.FC = () => {
+    const [drafts, setDrafts] = useState<{ id: string; title: string; summary: string }[]>([]);
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [throttledKeyword, setThrottledKeyword] = useState('');
+    const navigate = useNavigate();
 
-    const handleViewDetails = () => {
-
+    const fetchDrafts = async () => {
+        try {
+            const response = await ViewDraftList();
+            setDrafts(response.data || []);
+        } catch (error) {
+            console.error("Error fetching items:", error);
+        }
     };
+
+    useEffect(() => {
+        fetchDrafts();
+    }, []);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setThrottledKeyword(searchKeyword);
+        }, 300);
+
+        return () => clearInterval(interval);
+    }, [searchKeyword]);
+
+    const handleViewDetails = (id: string) => {
+        navigate(`/draftplan/${id}`);
+    };
+
+    const filteredItems = drafts.filter(item =>
+        item.title.toLowerCase().includes(throttledKeyword.toLowerCase())
+    );
 
     return (
         <RecordDetail>
             <SearchBar>
                 <img src={SearchIcon} alt="search icon"/>
-                <Search placeholder="검색어를 입력하세요..." />
+                <Search
+                    placeholder="검색어를 입력하세요..."
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                />
             </SearchBar>
-            <RecordBox
-                title="Title1"
-                summary="Summary 1"
-                onViewDetails={handleViewDetails}
-            />
-            <RecordBox
-                title="Title2"
-                summary="Summary 2"
-                onViewDetails={handleViewDetails}
-            />
+            {filteredItems.map((item) => (
+                <RecordBox
+                    key={item.id}
+                    id={item.id}
+                    title={item.title}
+                    summary={item.summary}
+                    onViewDetails={handleViewDetails}
+                />
+            ))}
         </RecordDetail>
     );
 };
@@ -38,6 +72,7 @@ const RecordDetail = styled.div`
     align-items: center;
     justify-items: center;
     gap: 1rem;
+    padding-bottom: 2rem;
 `;
 
 const SearchBar = styled.div`
@@ -62,7 +97,7 @@ const Search = styled.input`
     border-radius: 12px;
     font-size: 16px;
     background-color: #f6f6f6;
-    
+
     &:focus {
         outline: none;
         border-color: #007bff;

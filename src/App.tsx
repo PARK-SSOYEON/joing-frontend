@@ -22,7 +22,7 @@ const App = () => {
                             <Route path="/" element={<Onboarding/>}/>
                             <Route path="/signup" element={<SignUp/>}/>
                             <Route path="/draftplan" element={<DraftPlan/>}/>
-                            <Route path="/draftplan/:index" element={<DraftDetailView/>}/>
+                            <Route path="/draftplan/:id" element={<DraftDetailView/>}/>
                             <Route path="/matching/draft" element={<MatchingDraft/>}/>
                             <Route path="/matching/creator" element={<MatchingCreator/>}/>
                             <Route path="/message" element={<Message/>}/>
@@ -44,6 +44,7 @@ const Wrapper = styled.div`
     align-items: center;
     margin: 0;
     padding: 0;
+    background-color: white;
 `;
 
 

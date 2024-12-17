@@ -120,7 +120,7 @@ const TabProfileDetail: React.FC<TabProfileDetailProps> = ({role, profileInfo, o
         try {
             const response = await profileEvaluation(channelID);
 
-            if (response.appearance) {
+            if (response.evaluation_status) {
                 alert('채널 평가에 성공했습니다. 수정이 불가능합니다.');
                 setIsEditable(false);
             } else {
@@ -279,7 +279,7 @@ const AccountBox = styled.div`
     gap: 1rem;
     background-color: #ffffff;
     border-radius: 12px;
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.25);
+    border: #e4e4e4 solid;
 `;
 
 const AccountImg = styled.div`
